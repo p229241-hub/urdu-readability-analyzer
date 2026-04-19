@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Urdu Readability Checker</title>
+    <title>FSH Urdu Readability Checker</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -361,7 +361,7 @@
     <nav class="navbar">
         <div class="logo">
             <span class="logo-urdu">اردو</span>
-            <span class="logo-text">Urdu Readability Checker</span>
+            <span class="logo-text">FSH Urdu Readability Checker</span>
         </div>
         <div class="nav-links">
             <a href="#features">Features</a>
@@ -375,7 +375,7 @@
     </nav>
 
     <header class="hero">
-        <h1>Urdu Readability Checker</h1>
+        <h1>FSH Urdu Readability Checker</h1>
         <p>Use our free readability checker to analyze your Urdu text. It instantly shows the readability level of your writing and helps you create content suitable for children's books and educational materials.</p>
     </header>
 
@@ -389,7 +389,7 @@
                 <button type="button" id="btnPaste"><span>📋</span> Paste</button>
                 <button type="button" id="btnSample"><span>📄</span> Use sample text</button>
             </div>
-            <input type="file" id="fileInput" accept=".txt,.doc,.docx">
+            <input type="file" id="fileInput" accept=".txt,.docx">
             <button class="btn-analyze" id="btnAnalyze">Analyze Readability</button>
             <div class="result-box" id="resultBox">
                 <div class="result-header">
@@ -470,8 +470,10 @@
 
     <footer class="footer">
         <p>Urdu Readability Checker • Fry-based grading • Built for educators & publishers</p>
+        <p style="margin-top: 0.5rem; font-weight: 500; color: var(--green);">Developed by Fayaz, Shahid, and Huzaifa</p>
     </footer>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script>
         const textInput = document.getElementById('textInput');
         const btnAnalyze = document.getElementById('btnAnalyze');
@@ -562,9 +564,23 @@
         fileInput.addEventListener('change', (e) => {
             const f = e.target.files[0];
             if (!f) return;
-            const r = new FileReader();
-            r.onload = () => { textInput.value = r.result; };
-            r.readAsText(f, 'UTF-8');
+            
+            if (f.name.endsWith('.docx')) {
+                const reader = new FileReader();
+                reader.onload = (loadEvent) => {
+                    mammoth.extractRawText({arrayBuffer: loadEvent.target.result})
+                        .then((result) => { textInput.value = result.value; })
+                        .catch(() => { alert("Error reading DOCX file. Please try a plain .txt file."); });
+                };
+                reader.readAsArrayBuffer(f);
+            } else {
+                const r = new FileReader();
+                r.onload = () => { textInput.value = r.result; };
+                r.readAsText(f, 'UTF-8');
+            }
+            
+            // Re-enable uploading the exact same file twice
+            e.target.value = ''; 
         });
 
         btnPaste.addEventListener('click', async () => {
