@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urdu Readability Checker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #22c55e;
+            --green-dark: #16a34a;
+            --green-light: #86efac;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+            --white: #ffffff;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            min-height: 100vh;
+        }
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: var(--white);
+            box-shadow: var(--shadow);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .logo-urdu {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 1.5rem;
+            color: var(--green);
+            font-weight: 700;
+        }
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--gray-600);
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--gray-800); }
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+        .btn {
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--gray-600);
+        }
+        .btn-ghost:hover { color: var(--gray-800); }
+        .btn-primary {
+            background: var(--green);
+            color: var(--white);
+        }
+        .btn-primary:hover { background: var(--green-dark); }
+        .hero {
+            text-align: center;
+            padding: 2.5rem 2rem 2rem;
+        }
+        .hero h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+        .hero p {
+            color: var(--gray-600);
+            font-size: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            max-width: 1100px;
+            margin: 0 auto 3rem;
+            padding: 0 2rem;
+        }
+        @media (max-width: 900px) {
+            .panels { grid-template-columns: 1fr; }
+        }
+        .panel {
+            background: var(--white);
+            border-radius: 1rem;
+            box-shadow: var(--shadow-lg);
+            padding: 1.5rem;
+            min-height: 420px;
+        }
+        .panel-left {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .textarea-wrap {
+            flex: 1;
+            min-height: 220px;
+        }
+        textarea {
+            width: 100%;
+            height: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: 'Noto Nastaliq Urdu', 'Segoe UI', serif;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+        .input-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .input-actions button {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            background: var(--gray-100);
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .input-actions button:hover {
+            background: var(--gray-200);
+            color: var(--gray-800);
+        }
+        .btn-analyze {
+            width: 100%;
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            background: var(--green);
+            color: var(--white);
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: background 0.2s;
+        }
+        .btn-analyze:hover { background: var(--green-dark); }
+        .btn-analyze:disabled {
+            background: var(--gray-200);
+            cursor: not-allowed;
+            color: var(--gray-600);
+        }
+        .panel-right h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .panel-right .urdu-title {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 1.1rem;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+        }
+        .steps {
+            list-style: none;
+        }
+        .steps li {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        .steps .num {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            background: var(--green);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .result-box {
+            margin-top: 1rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border-radius: 1rem;
+            border: 1px solid #bbf7d0;
+            display: none;
+            animation: slideIn 0.4s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .result-box.show { display: block; }
+        .result-box.grade-easy { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #86efac; }
+        .result-box.grade-medium { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-color: #fcd34d; }
+        .result-box.grade-hard { background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border-color: #fda4af; }
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .grade-badge {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: white;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+            flex-shrink: 0;
+        }
+        .grade-badge.easy { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .grade-badge.medium { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .grade-badge.hard { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .grade-info h4 {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .grade-info .level-label {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+        .grade-scale {
+            display: flex;
+            gap: 2px;
+            margin: 1rem 0;
+        }
+        .grade-scale span {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--gray-200);
+            transition: background 0.3s;
+        }
+        .grade-scale span.active { background: var(--green); }
+        .grade-scale span.active.medium { background: #f59e0b; }
+        .grade-scale span.active.hard { background: #ef4444; }
+        .grade-scale-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+        .metrics-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        .metric-card {
+            background: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .metric-card .icon { font-size: 1.5rem; }
+        .metric-card .value { font-weight: 700; font-size: 1.1rem; color: var(--gray-800); }
+        .metric-card .label { font-size: 0.75rem; color: var(--gray-600); }
+        .result-msg {
+            font-size: 0.95rem;
+            color: var(--gray-600);
+            margin-top: 0.5rem;
+        }
+        .result-msg.urdu {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 1.1rem;
+        }
+        .result-tip {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.7);
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--gray-600);
+            border-left: 4px solid var(--green);
+        }
+        .features-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            padding: 2rem;
+            background: var(--white);
+            margin: 0 2rem 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+        .feature-icon { font-size: 1.25rem; }
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--gray-600);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--gray-200);
+        }
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        #fileInput { display: none; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <span class="logo-urdu">اردو</span>
+            <span class="logo-text">Urdu Readability Checker</span>
+        </div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#about">About</a>
+            <a href="#docs">Docs</a>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn btn-ghost">Sign In</button>
+            <button class="btn btn-primary">Get Started</button>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Urdu Readability Checker</h1>
+        <p>Use our free readability checker to analyze your Urdu text. It instantly shows the readability level of your writing and helps you create content suitable for children's books and educational materials.</p>
+    </header>
+
+    <main class="panels">
+        <div class="panel panel-left">
+            <div class="textarea-wrap">
+                <textarea id="textInput" placeholder="اپنا اردو متن یہاں درج کریں یا نیچے کوئی آپشن منتخب کریں....."></textarea>
+            </div>
+            <div class="input-actions">
+                <button type="button" id="btnImport"><span>📁</span> Import file</button>
+                <button type="button" id="btnPaste"><span>📋</span> Paste</button>
+                <button type="button" id="btnSample"><span>📄</span> Use sample text</button>
+            </div>
+            <input type="file" id="fileInput" accept=".txt,.doc,.docx">
+            <button class="btn-analyze" id="btnAnalyze">Analyze Readability</button>
+            <div class="result-box" id="resultBox">
+                <div class="result-header">
+                    <div class="grade-badge" id="gradeBadge">2</div>
+                    <div class="grade-info">
+                        <h4 id="resultGrade">Grade 2</h4>
+                        <div class="level-label" id="levelLabel">Easy to Read</div>
+                    </div>
+                </div>
+                <div class="grade-scale" id="gradeScale" title="1 = Easiest, 12 = Hardest">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="grade-scale-labels">
+                    <span>1 (Easiest)</span>
+                    <span>12 (Hardest)</span>
+                </div>
+                <div class="metrics-row">
+                    <div class="metric-card">
+                        <span class="icon">📊</span>
+                        <div>
+                            <div class="value" id="metricSyll">—</div>
+                            <div class="label">Syllables per 100 words</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <span class="icon">📝</span>
+                        <div>
+                            <div class="value" id="metricSent">—</div>
+                            <div class="label">Sentences per 100 words</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="result-msg" id="resultMsgEn"></div>
+                <div class="result-msg urdu" id="resultMsgUrdu"></div>
+                <div class="result-tip" id="resultTip"></div>
+            </div>
+        </div>
+
+        <div class="panel panel-right">
+            <h3>Readability Checker</h3>
+            <div class="urdu-title">یہ کیسے کام کرتا ہے</div>
+            <ol class="steps">
+                <li>
+                    <span class="num">1</span>
+                    <span>اپنا متن شامل کریں فوری ریڈیبلٹی سکور حاصل کرنے کے لیے۔</span>
+                </li>
+                <li>
+                    <span class="num">2</span>
+                    <span>سرخ اور پیلے نمایاں حصوں کو دیکھیں تاکہ آپ کو معلوم ہو کہ کون سے جملے آپ کے سکور کو نقصان پہنچا رہے ہیں۔</span>
+                </li>
+                <li>
+                    <span class="num">3</span>
+                    <span>جملوں کو ٹھیک کرنے کی کوشش کریں یا انہیں کلک کریں تاکہ AI تبدیلیوں کی تجاویز دے۔</span>
+                </li>
+            </ol>
+        </div>
+    </main>
+
+    <section class="features-bar">
+        <div class="feature-item">
+            <span class="feature-icon">📚</span>
+            <span>Children's Books</span>
+        </div>
+        <div class="feature-item">
+            <span class="feature-icon">📖</span>
+            <span>Educational Content</span>
+        </div>
+        <div class="feature-item">
+            <span class="feature-icon">🎯</span>
+            <span>Grade 1–12</span>
+        </div>
+        <div class="feature-item">
+            <span class="feature-icon">⚡</span>
+            <span>Instant Analysis</span>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>Urdu Readability Checker • Fry-based grading • Built for educators & publishers</p>
+    </footer>
+
+    <script>
+        const textInput = document.getElementById('textInput');
+        const btnAnalyze = document.getElementById('btnAnalyze');
+        const btnImport = document.getElementById('btnImport');
+        const btnPaste = document.getElementById('btnPaste');
+        const btnSample = document.getElementById('btnSample');
+        const fileInput = document.getElementById('fileInput');
+        const resultBox = document.getElementById('resultBox');
+        const resultGrade = document.getElementById('resultGrade');
+        const resultMsgEn = document.getElementById('resultMsgEn');
+        const resultMsgUrdu = document.getElementById('resultMsgUrdu');
+        const gradeBadge = document.getElementById('gradeBadge');
+        const levelLabel = document.getElementById('levelLabel');
+        const gradeScale = document.getElementById('gradeScale');
+        const metricSyll = document.getElementById('metricSyll');
+        const metricSent = document.getElementById('metricSent');
+        const resultTip = document.getElementById('resultTip');
+
+        const sampleText = 'بنگلہ دیش کی عدالت کا تاریخی فیصلہ۔ عدالت نے پارلیمنٹ سے یہ درخواست کی ہے کہ وہ جلد ایسا قانون وضع کرے۔ بنگلہ دیش کے علما نے اس فیصلے پر بھر پور ردِ عمل کا اظہار کیا۔';
+
+        const API_URL = window.location.origin + '/api/analyze';
+
+        function getGradeInfo(grade) {
+            if (grade <= 4) return { level: 'Easy to Read', levelUr: 'آسان', cls: 'easy', tip: 'Great for young readers! Use for children\'s books (ages 6–10).' };
+            if (grade <= 8) return { level: 'Moderate', levelUr: 'درمیانی', cls: 'medium', tip: 'Suitable for middle school. Consider shorter sentences to reach younger readers.' };
+            return { level: 'Challenging', levelUr: 'چیلنجنگ', cls: 'hard', tip: 'Best for high school or adult readers. Use simpler words for children.' };
+        }
+
+        function renderResult(data) {
+            const grade = data.grade;
+            const info = getGradeInfo(grade);
+
+            resultGrade.textContent = `Grade ${grade}`;
+            gradeBadge.textContent = grade;
+            gradeBadge.className = 'grade-badge ' + info.cls;
+            levelLabel.textContent = info.level + ' • ' + info.levelUr;
+            resultBox.className = 'result-box show grade-' + info.cls;
+
+            gradeScale.querySelectorAll('span').forEach((s, i) => {
+                s.classList.remove('active', 'medium', 'hard');
+                if (i < grade) {
+                    s.classList.add('active', info.cls);
+                }
+            });
+
+            metricSyll.textContent = data.syllables_per_100 != null ? data.syllables_per_100 : '—';
+            metricSent.textContent = data.sentences_per_100 != null ? data.sentences_per_100 : '—';
+            resultMsgEn.textContent = data.message_en || '';
+            resultMsgUrdu.textContent = data.message || '';
+            resultTip.textContent = info.tip;
+        }
+
+        btnAnalyze.addEventListener('click', async () => {
+            const text = textInput.value.trim();
+            if (!text) {
+                alert('Please enter some Urdu text to analyze.');
+                return;
+            }
+            btnAnalyze.disabled = true;
+            btnAnalyze.textContent = 'Analyzing...';
+            resultBox.classList.remove('show');
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.error || 'Analysis failed');
+                    return;
+                }
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                renderResult(data);
+                resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } catch (err) {
+                alert('Cannot connect to server. Run: python run_app.py (or python app.py)');
+            } finally {
+                btnAnalyze.disabled = false;
+                btnAnalyze.textContent = 'Analyze Readability';
+            }
+        });
+
+        btnImport.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            const f = e.target.files[0];
+            if (!f) return;
+            const r = new FileReader();
+            r.onload = () => { textInput.value = r.result; };
+            r.readAsText(f, 'UTF-8');
+        });
+
+        btnPaste.addEventListener('click', async () => {
+            try {
+                const t = await navigator.clipboard.readText();
+                textInput.value = t;
+            } catch {
+                alert('Could not paste. Please paste manually (Ctrl+V).');
+            }
+        });
+
+        btnSample.addEventListener('click', () => {
+            textInput.value = sampleText;
+        });
+    </script>
+</body>
+</html>
